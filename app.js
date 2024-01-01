@@ -34,7 +34,7 @@ app.use(`${API}/orders` , ordersRouter);
 app.use(`${API}/categories` , categoriesRouter);
 
 
-mongoose.connect(process.env.LOCAL_CONNECTION_URL)
+mongoose.connect(process.env.CONNECTION_URL)
 .then(() => {
     console.log('Database connection is ready');
 })
