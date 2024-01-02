@@ -1,9 +1,8 @@
-const express = require('express');
-const router = express.Router();
-const Category = require('../models/category.model');
+const Category = require("../../models/category.model");
 
 
-router.get('/' , async(req,res) => {
+
+async function httpGetCategories (req,res)  {
     const categoryList = await Category.find();
 
     if(!categoryList) {
@@ -12,9 +11,9 @@ router.get('/' , async(req,res) => {
         })
     }
     return res.json(categoryList)
-});
+};
 
-router.get('/:id' , async(req,res) => {
+async function httpGetCategory (req,res) {
     try{
         const category = await Category.findById(req.params.id);
         if(!category) return res.status(404).json({
@@ -27,9 +26,10 @@ router.get('/:id' , async(req,res) => {
         console.log(err.message)
         res.end(err.message)
     }
-});
+}
 
-router.post('/' , async(req,res) => {
+
+async function httpPostCategory (req,res)  {
     let category = new Category({
         name: req.body.name,
         icon: req.body.icon,
@@ -41,9 +41,9 @@ router.post('/' , async(req,res) => {
 
 
     res.status(201).send(category)
-});
+}
 
-router.put('/:id' , async(req,res) => {
+async function httpUpdateCategory (req,res)  {
     const category = await Category.findByIdAndUpdate(req.params.id , {
         name: req.body.name,
         icon: req.body.icon,
@@ -57,9 +57,9 @@ router.put('/:id' , async(req,res) => {
     });
 
     return res.status(200).json(category);
-});
+}
 
-router.delete('/:id' , async(req,res) => {
+async function httpDeleteCategory (req,res)  {
 
     try {
         const _id = req.params.id;
@@ -75,6 +75,11 @@ router.delete('/:id' , async(req,res) => {
         err: err.message
     });
     }
-})
-
-module.exports = router;
+}
+module.exports = {
+    httpGetCategories,
+    httpGetCategory,
+    httpPostCategory,
+    httpUpdateCategory,
+    httpDeleteCategory,
+}

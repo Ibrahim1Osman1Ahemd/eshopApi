@@ -1,11 +1,10 @@
+const jwt = require("jsonwebtoken");
+const User = require("../../models/user.model");
 const bycrpt = require('bcrypt');
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const User = require('../models/user.model');
 
-const router = express.Router();
 
-router.get('/' , async(req,res) => {
+
+async function httpGetUsers (req,res)  {
     const userList = await User.find().select('-passwordHash');
 
     if(!userList) {
@@ -14,9 +13,9 @@ router.get('/' , async(req,res) => {
         })
     }
     return res.json(userList)
-});
+}
 
-router.get('/:id' , async(req,res) => {
+async function httpGetUser (req,res)  {
     try{
         const user = await User.findById(req.params.id).select('-passwordHash');
         if(!user) return res.status(404).json({
@@ -29,9 +28,9 @@ router.get('/:id' , async(req,res) => {
         console.log(err.message)
         res.end(err.message)
     }
-});
+}
 
-router.get('/get/count' , async(req,res) => {
+async function httpGetUsersCount (req,res)  {
     const userCount = await User.countDocuments();
     if(!userCount) {
         res.status(500).json({success: false})
@@ -39,9 +38,9 @@ router.get('/get/count' , async(req,res) => {
     res.json({
         userCount : userCount,
     });
-});
+}
 
-router.post(`/register` , async(req,res) => {
+async function httpNewUser (req,res)  {
     try{
         let user = new User({
             name : req.body.name,
@@ -70,9 +69,9 @@ router.post(`/register` , async(req,res) => {
             error: 'There some error pleace try again letter',
         })
     }
-});
+}
 
-router.post(`/login` , async(req,res) => {
+async function httpLogin (req,res)  {
     try{
        const {email , password} = req.body
        const user = await User.findOne({email : email});
@@ -115,11 +114,9 @@ router.post(`/login` , async(req,res) => {
             error: 'There some error pleace try again letter',
         })
     }
-});
+}
 
-
-
-router.delete('/:id' , async(req,res) => {
+async function httpDeleteUser (req,res)  {
     try {
         const _id = req.params.id;
         const user = await User.findByIdAndDelete(_id);
@@ -134,6 +131,13 @@ router.delete('/:id' , async(req,res) => {
         err: err.message
     });
     }
-});
+}
 
-module.exports = router;
+module.exports = {
+    httpGetUsers,
+    httpGetUser,
+    httpGetUsersCount,
+    httpNewUser,
+    httpLogin,
+    httpDeleteUser,
+}

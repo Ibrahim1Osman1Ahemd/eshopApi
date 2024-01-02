@@ -1,10 +1,10 @@
-const OrderItems  = require("../models/orderItem.model");
-const  Order  = require("../models/order.model");
-const express = require('express');
 const { default: mongoose } = require("mongoose");
-const router = express.Router();
+const Order = require("../../models/order.model");
+const OrderItems = require('../../models/orderItem.model')
 
-router.get('/' , async(req,res) => {
+
+
+async function httpGetOrders (req,res) {
     try{
         const orderList = await Order.find().populate('user','name').sort({'dateCreated':1});
     
@@ -18,10 +18,10 @@ router.get('/' , async(req,res) => {
         console.log(err.message)
         res.end(err.message)
     }
-});
+}
 
 
-router.get('/:id' , async(req,res) => {
+async function httpGetOrder (req,res) {
     try{
         const id = req.params.id;
         if(!mongoose.isValidObjectId(id)) return res.status(404).json({
@@ -44,9 +44,11 @@ router.get('/:id' , async(req,res) => {
         console.log(err.message)
         res.end(err.message)
     }
-});
+}
 
-router.post('/' , async(req,res) => {
+
+
+async function httpPostOrder (req,res) {
 
     const orderItemsIds = await Promise.all(req.body.orderItems.map(async orderItem => {
         let newOrderItem = new OrderItems({
@@ -81,9 +83,10 @@ router.post('/' , async(req,res) => {
     .send('Category cann\'t be created try again letter!');
 
     res.status(201).send(order)
-});
+}
 
-router.put('/:id' , async(req,res) => {
+
+async function httpUpdateOrder (req,res) {
     try {
         const order = await Order.findByIdAndUpdate(req.params.id , {
             status: req.body.status,
@@ -101,10 +104,10 @@ router.put('/:id' , async(req,res) => {
         console.log(er.message);
         res.end('There are err pleace try again letter')
     }
-});
+}
 
 
-router.delete('/:id' , async(req,res) => {
+async function httpDeleteOrder (req,res)  {
 
     try {
         const _id = req.params.id;
@@ -123,9 +126,9 @@ router.delete('/:id' , async(req,res) => {
         err: err.message
     });
     }
-});
+}
 
-router.get('/get/totalsales' , async(req,res) => {
+async function httpGetTotalSales (req,res)  {
     const totalsales = await Order.aggregate([{
         $group: {_id: null , totalsales: {$sum: '$totalPrice'}}
     }]);
@@ -135,9 +138,9 @@ router.get('/get/totalsales' , async(req,res) => {
     });
 
     res.json({totalsales:totalsales.pop().totalsales})
-});
+}
 
-router.get('/get/count' , async(req,res) => {
+async function httpGetOrdersCount (req,res)  {
     const orderCount = await Order.countDocuments();
     if(!orderCount) {
         res.status(500).json({success: false})
@@ -145,10 +148,9 @@ router.get('/get/count' , async(req,res) => {
     res.json({
         orderCount : orderCount,
     });
-});
+}
 
-
-router.get('/get/userorders/:userId' , async(req,res) => {
+async function httpGetUserOrders (req,res)  {
     try{
         const id = req.params.userId;
         if(!mongoose.isValidObjectId(id)) return res.status(404).json({
@@ -170,5 +172,14 @@ router.get('/get/userorders/:userId' , async(req,res) => {
         console.log(err.message)
         res.end(err.message)
     }
-});
-module.exports = router;
+}
+module.exports = {
+    httpGetOrders,
+    httpGetOrder,
+    httpPostOrder,
+    httpUpdateOrder,
+    httpDeleteOrder,
+    httpGetTotalSales,
+    httpGetOrdersCount,
+    httpGetUserOrders,
+}

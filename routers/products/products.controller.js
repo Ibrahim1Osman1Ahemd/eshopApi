@@ -1,11 +1,10 @@
-const { default: mongoose } = require('mongoose');
-const Category = require('../models/category.model');
-const Product = require('../models/product.model');
-const express = require('express');
-const router = express.Router();
+
+const Category = require('../../models/category.model');
+const Product = require('../../models/product.model');
+const mongoose = require('mongoose')
 
 
-router.get(`/` , async(req,res) => {
+async function httpGetProducts (req,res)  {
     let filter = {};
     if(req.query.categories){
         filter  = {category: req.query.categories.split(',')}
@@ -18,9 +17,11 @@ router.get(`/` , async(req,res) => {
         })
     }
     res.status(200).json(productList)
-});
+}
 
-router.get(`/:id` , async(req,res) => {
+
+
+async function httpGetProduct (req,res) {
     try{
         if(!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({
             success: false,
@@ -41,21 +42,33 @@ router.get(`/:id` , async(req,res) => {
             err: err.message
         })
     }
-});
+}
 
-router.post(`/` , async(req,res) => {
+
+async function httpPostProduct (req,res)  {
     try{
+        console.log(req.path)
+
         const category = await Category.findById(req.body.category);
         
         if(!category) return res.status(400).json({
             success: false,
             message: 'Invalid Category!'
         });
+
+        const file = req.file;
+        if(!file) return res.status(400).json({
+            message: 'No image in the request'
+        })
+
+        const fileName = req.file.filename;
+        console.log(fileName)
+        const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`
         let product = new Product({
             name : req.body.name,
             description: req.body.description,
             richDescription: req.body.richDescription,
-            image : req.body.image,
+            image : `${basePath}${fileName}`,
             brand: req.body.brand,
             price: req.body.price,
             category: req.body.category,
@@ -79,15 +92,17 @@ router.post(`/` , async(req,res) => {
             error: 'There some error pleace try again letter',
         })
     }
-});
+}
 
-router.put('/:id' , async(req,res) => {
+
+async function httpUpdateProduct (req,res) {
     try{
-        if(mongoose.isValidObjectId(req.params.id)) return res.status(400).json({
+        if(!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({
             message: 'Invalid product id!',
             success: false
         })
         const category = await Category.findById(req.body.category);
+        console.log(category)
             
         if(!category) return res.status(400).json({
             success: false,
@@ -124,9 +139,10 @@ router.put('/:id' , async(req,res) => {
             error: err.message
         })
     }
-});
+};
 
-router.delete('/:id' , async(req,res) => {
+
+async function httpDeleteProduct (req,res) {
     try {
         const _id = req.params.id;
         const product = await Product.findByIdAndDelete(_id);
@@ -141,19 +157,9 @@ router.delete('/:id' , async(req,res) => {
         err: err.message
     });
     }
-});
+}
 
-router.get('/get/count' , async(req,res) => {
-    const productCount = await Product.countDocuments();
-    if(!productCount) {
-        res.status(500).json({success: false})
-    }
-    res.json({
-        productCount : productCount,
-    });
-});
-
-router.get('/get/featured/:count'  , async(req,res) => {
+async function httpGetFeaturedCount (req,res) {
     const count = req.params.count || 5
     const productCount = await Product.find({isFeatured: true}).limit(+count);
     if(!productCount) {
@@ -162,5 +168,66 @@ router.get('/get/featured/:count'  , async(req,res) => {
     res.json({
         productCount : productCount,
     });
-});
-module.exports = router;
+}
+
+async function httpGetProductsCount  (req,res)  {
+    const productCount = await Product.countDocuments();
+    if(!productCount) {
+        res.status(500).json({success: false})
+    }
+    res.json({
+        productCount : productCount,
+    });
+}
+
+
+async function httpUpdateGallery (req,res)  {
+    try{
+        if(!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({
+            message: 'Invalid product id!',
+            success: false,
+            id : req.params.id
+        })
+        const files = req.files
+        if(!files) return res.status(400).json({
+            message: 'There are no files in ht requset!'
+        });
+        const imagesPaths = [];
+        const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`
+        
+        if(files) {
+            files.map(file => {
+                imagesPaths.push(`${basePath}${file.filename}`)
+            });
+        }
+        const product = await Product.findByIdAndUpdate(req.params.id , {
+            images: imagesPaths
+        }, {
+            new: true,
+        });
+        if(!product) return res.status(404).json({
+            success: false,
+            message: 'The product with the given id is not found',
+        });
+    
+        return res.status(200).json({
+            product,
+            success: true,
+        });
+    }catch (err){
+        res.status(500).json({
+            success: false,
+            error: err.message
+        })
+    }
+}
+module.exports = {
+    httpGetProducts,
+    httpGetProduct,
+    httpPostProduct,
+    httpUpdateProduct,
+    httpDeleteProduct,
+    httpGetFeaturedCount,
+    httpGetProductsCount,
+    httpUpdateGallery,
+}
